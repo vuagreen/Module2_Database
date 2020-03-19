@@ -176,7 +176,7 @@ value(1,1,1,2),
 use caseStudyDatabase;
 
 -- Task2.Hiển thị thông tin của tất cả nhân viên có trong hệ thống có tên bắt đầu là một trong các ký tự “H”, “T” hoặc “K” và có tối đa 15 ký tự.
-SELECT * FROM nhan_vien WHERE HoTen LIKE 'H%' or HoTen LIKE '%T' AND length(HoTen)<15 ;
+SELECT * FROM nhan_vien WHERE HoTen LIKE 'H%' or HoTen LIKE '%T' AND length(HoTen)<=15 ;
 
 -- Task3.Hiển thị thông tin của tất cả khách hàng có độ tuổi từ 18 đến 50 tuổi và có địa chỉ ở “Đà Nẵng” hoặc “Quảng Trị”.
 SELECT * FROM khach_hang WHERE (DATEDIFF(CURDATE(),NgaySinh)/ 365)>18 AND DiaChi LIKE '%Đà Nẵng%'OR DiaChi LIKE '%Quảng Trị%' ;
@@ -194,7 +194,7 @@ group by HoTen;
 -- (Với TongTien được tính theo công thức như sau: ChiPhiThue + SoLuong*Gia, với SoLuong và Giá là từ bảng DichVuDiKem) 
 -- cho tất cả các Khách hàng đã từng đặt phỏng. (Những Khách hàng nào chưa từng đặt phòng cũng phải hiển thị ra).
 SELECT HoTen, TenLoaiKhach, hop_dong.IDHopDong, TenDichVu, NgayLamHopDong, NgayKetThuc,(ChiPhiThue + SoLuong*dich_vu_di_kem.Gia) AS 'Tổng Tiền' FROM khach_hang 
-INNER JOIN loai_khach ON khach_hang.IDLoaiKhach=loai_khach.IDLoaiKhach
+LEFT JOIN loai_khach ON khach_hang.IDLoaiKhach=loai_khach.IDLoaiKhach
 INNER JOIN hop_dong ON khach_hang.IDKhachHang=hop_dong.IDKhachHang
 INNER JOIN dich_vu ON hop_dong.IDDichVu=dich_vu.IDDichVu
 INNER JOIN hop_dong_chi_tiet ON hop_dong.IDHopDong=hop_dong_chi_tiet.IDHopDong
@@ -240,28 +240,70 @@ SELECT HoTen
 FROM khach_hang;
 
 
--- 9.	Thực hiện thống kê doanh thu theo tháng, nghĩa là tương ứng với mỗi tháng trong năm 2019 thì sẽ có bao nhiêu khách hàng thực hiện đặt phòng.
+-- Task9.	Thực hiện thống kê doanh thu theo tháng, nghĩa là tương ứng với mỗi tháng trong năm 2019 thì sẽ có bao nhiêu khách hàng thực hiện đặt phòng.
 SELECT MONTH(NgayLamHopDong) AS thang, SUM(TongTien) AS 'Doanh Thu' 
 FROM hop_dong 
 WHERE YEAR(NgayLamHopDong)=2019 
 GROUP BY thang;
 
--- 10.	Hiển thị thông tin tương ứng với từng Hợp đồng thì đã sử dụng bao nhiêu Dịch vụ đi kèm. 
+-- Task10.	Hiển thị thông tin tương ứng với từng Hợp đồng thì đã sử dụng bao nhiêu Dịch vụ đi kèm. 
 -- Kết quả hiển thị bao gồm IDHopDong, NgayLamHopDong, NgayKetthuc, TienDatCoc, SoLuongDichVuDiKem (được tính dựa trên việc count các IDHopDongChiTiet).
 SELECT hop_dong.IDHopDong, NgayLamHopDong, NgayKetthuc, TienDatCoc, COUNT(IDHopDongChiTiet) AS SoLuongDichVuDiKem 
 FROM hop_dong
 INNER JOIN hop_dong_chi_tiet ON hop_dong.IDHopDong=hop_dong_chi_tiet.IDHopDong
-GROUP BY IDHopDong
+GROUP BY IDHopDong;
 
 
 
--- 11.	Hiển thị thông tin các Dịch vụ đi kèm đã được sử dụng bởi những Khách hàng có TenLoaiKhachHang là “Diamond” và có địa chỉ là “Vinh” hoặc “Quảng Ngãi”.
+-- Task11.	Hiển thị thông tin các Dịch vụ đi kèm đã được sử dụng bởi những Khách hàng có TenLoaiKhachHang là “Diamond” và có địa chỉ là “Vinh” hoặc “Quảng Ngãi”.
+SELECT dvdk.IDDichVuDiKem,TenDichVuDiKem,Gia,DonVi,TrangThaiKhaDung,kh.IDKhachHang,lk.TenLoaiKhach,kh.DiaChi
+FROM khach_hang kh
+INNER JOIN hop_dong hd ON kh.IDKhachHang=hd.IDKhachHang
+INNER JOIN loai_khach lk ON kh.IDLoaiKhach=lk.IDLoaiKhach
+INNER JOIN hop_dong_chi_tiet hdct ON hd.IDHopDong=hdct.IDHopDong
+INNER JOIN dich_vu_di_kem dvdk ON hdct.IDDichVuDiKem=dvdk.IDDichVuDiKem
+WHERE TenLoaiKhach LIKE 'Diamond' AND (DiaChi LIKE '%Quảng Trị%' OR DiaChi LIKE '%vinh%');
 
--- 12.	Hiển thị thông tin IDHopDong, TenNhanVien, TenKhachHang, SoDienThoaiKhachHang, TenDichVu, SoLuongDichVuDikem (được tính dựa trên tổng Hợp đồng chi tiết), TienDatCoc của tất cả các dịch vụ đã từng được khách hàng đặt vào 3 tháng cuối năm 2019 nhưng chưa từng được khách hàng đặt vào 6 tháng đầu năm 2019.
+
+-- Task12.	Hiển thị thông tin IDHopDong, TenNhanVien, TenKhachHang, SoDienThoaiKhachHang, TenDichVu,
+--  SoLuongDichVuDikem (được tính dựa trên tổng Hợp đồng chi tiết), TienDatCoc của tất cả các dịch vụ đã 
+--  từng được khách hàng đặt vào 3 tháng cuối năm 2019 nhưng chưa từng được khách hàng đặt vào 6 tháng đầu năm 2019.
+SELECT distinct hd.IDHopDong, nv.HoTen, kh.HoTen, kh.SDT, TenDichVu, COUNT(hdct.SoLuong) AS SoLuongDichVuDikem , TienDatCoc, NgayLamHopDong
+FROM khach_hang kh
+INNER JOIN hop_dong hd ON kh.IDKhachHang=hd.IDKhachHang
+INNER JOIN nhan_vien nv ON nv.IDNhanVien=hd.IDNhanVien
+INNER JOIN hop_dong_chi_tiet hdct ON hd.IDHopDong=hdct.IDHopDong
+INNER JOIN dich_vu dv ON dv.IDDichVu=hd.IDDichVu
+WHERE EXISTS(
+SELECT IDDichVu
+FROM hop_dong hd
+WHERE hd.IDDichVu=dv.IDDichVu
+AND YEAR(hd.NgayLamHopDong) =2019 AND MONTH (hd.NgayLamHopDong) >9) 
+AND 
+NOT EXISTS( 
+SELECT IDDichVu
+FROM hop_dong hd
+WHERE hd.IDDichVu=dv.IDDichVu
+AND MONTH(hd.NgayLamHopDong) <7 )
+GROUP BY IDHopDongChiTiet;
 
 -- 13.	Hiển thị thông tin các Dịch vụ đi kèm được sử dụng nhiều nhất bởi các Khách hàng đã đặt phòng. (Lưu ý là có thể có nhiều dịch vụ có số lần sử dụng nhiều như nhau).
+SELECT *
+FROM dich_vu_di_kem 
+WHERE  IDDichVuDiKem IN(
+         SELECT IDDichVuDiKem
+		 FROM hop_dong_chi_tiet 
+         GROUP BY IDDichVuDiKem
+         HAVING COUNT(IDDichVuDiKem)=(
+                      SELECT MAX(SL)
+                      FROM ( SELECT IDDichVuDiKem,COUNT(IDDichVuDiKem) AS SL
+                             FROM hop_dong_chi_tiet
+                             GROUP BY IDDichVuDiKem
+                      
+                      ) a
+         )
 
-
+);
 -- 14.	Hiển thị thông tin tất cả các Dịch vụ đi kèm chỉ mới được sử dụng một lần duy nhất. Thông tin hiển thị bao gồm IDHopDong, TenLoaiDichVu, TenDichVuDiKem, SoLanSuDung.
 
 -- 15.	Hiển thi thông tin của tất cả nhân viên bao gồm IDNhanVien, HoTen, TrinhDo, TenBoPhan, SoDienThoai, DiaChi mới chỉ lập được tối đa 3 hợp đồng từ năm 2018 đến 2019.
