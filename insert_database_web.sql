@@ -199,12 +199,12 @@ INNER JOIN categories ca ON pr.categories_id=ca.categories_id
 INNER JOIN suppliers su ON pr.supplier_id=su.suppliers_id;
 
 -- câu 19: Hiển thị tất cả danh mục (Categories) với số lượng hàng hóa trong mỗi danh mục(Viết 2 cách) (edited) 
-SELECT * 
-FROM categories;
+SELECT ca.* ,SUM(ordd.quantity)+stock AS SL
+FROM categories ca
+INNER JOIN products pr ON pr.categories_id=ca.categories_id
+INNER JOIN orderdetails ordd ON pr.products_id=ordd.products_id
+GROUP BY ca.categories_id ;
 -- Cách 2: 
-SELECT ca.categories_id,ca.name,ca.description
-FROM products pr
-INNER JOIN categories ca ON pr.categories_id=ca.categories_id;
 
 -- câu 20: Hiển thị tất cả nhà cung cấp (Suppliers) với số lượng hàng hóa mỗi nhà cung cấp(Viết 2 cách)
 SELECT su.suppliers_id,su.name,su.email,su.phone_number,su.address,pr.stock
