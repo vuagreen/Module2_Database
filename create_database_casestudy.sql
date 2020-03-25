@@ -305,12 +305,39 @@ WHERE  IDDichVuDiKem IN(
 
 );
 -- 14.	Hiển thị thông tin tất cả các Dịch vụ đi kèm chỉ mới được sử dụng một lần duy nhất. Thông tin hiển thị bao gồm IDHopDong, TenLoaiDichVu, TenDichVuDiKem, SoLanSuDung.
+SELECT IDHopDong, TenDichVuDiKem, COUNT(hdct.IDDichVuDiKem) AS SoLanSuDung 
+FROM hop_dong_chi_tiet hdct
+RIGHT JOIN dich_vu_di_kem dvdk ON hdct.IDDichVuDiKem =dvdk.IDDichVuDiKem
+GROUP BY dvdk.IDDichVuDiKem
+HAVING SoLanSuDung=1;
 
 -- 15.	Hiển thi thông tin của tất cả nhân viên bao gồm IDNhanVien, HoTen, TrinhDo, TenBoPhan, SoDienThoai, DiaChi mới chỉ lập được tối đa 3 hợp đồng từ năm 2018 đến 2019.
+SELECT nv.IDNhanVien, HoTen, TrinhDo, TenBoPhan, SDT, DiaChi,COUNT(hd.IDHopDong) AS SLHĐ
+FROM nhan_vien nv
+LEFT JOIN hop_dong hd ON nv.IDNhanVien=hd.IDNhanVien
+INNER JOIN trinh_do td ON nv.IDTrinhDo=td.IDTrinhDo
+INNER JOIN bo_phan bp ON bp.IDBoPhan = nv.IDBoPhan
+WHERE YEAR(hd.NgayLamHopDong)= 2018 OR YEAR(hd.NgayLamHopDong)= 2019
+GROUP BY nv.IDNhanVien
+HAVING SLHĐ<=3;
 
 -- 16.	Xóa những Nhân viên chưa từng lập được hợp đồng nào từ năm 2017 đến năm 2019.
+DELETE FROM nhan_vien 
+WHERE IDNhanVien NOT IN (
+SELECT IDNhanVien
+FROM hop_dong hd
+WHERE YEAR(hd.NgayLamHopDong) BETWEEN 2017 AND 2019
+GROUP BY nhan_vien.IDNhanVien
+);
 -- 17.	Cập nhật thông tin những khách hàng có TenLoaiKhachHang từ  Platinium lên Diamond, chỉ cập nhật những khách hàng đã từng đặt phòng với tổng Tiền thanh toán trong năm 2019 là lớn hơn 10.000.000 VNĐ.
-
+UPDATE khach_hang kh
+SET IDLoaiKhach= 2  
+WHERE IDLoaiKhach = 1
+AND idKhachHang IN(SELECT IDLoaiKhach
+from hop_dong hd
+where year(NgayLamHopDong)=2019
+group by IDKhachHang
+having SUM(TongTien)>10000000);
 -- 18.	Xóa những khách hàng có hợp đồng trước năm 2016 (chú ý ràngbuộc giữa các bảng).
 
 -- 19.	Cập nhật giá cho các Dịch vụ đi kèm được sử dụng trên 10 lần trong năm 2019 lên gấp đôi.
