@@ -223,7 +223,7 @@ INNER JOIN products pr ON pr.products_id=ordd.products_id
 WHERE DAY(created_date)=DAY(CURDATE()) AND MONTH(created_date)=MONTH(CURDATE());
 
 -- câu 22: Hiển thị tất cả các khách hàng mua hàng trong khoảng từ ngày, đến ngày
-SELECT *
+SELECT cu.first_name,cu.last_name,ord.created_date
 FROM orders ord
 INNER JOIN orderdetails ordd ON ord.orders_id=ordd.orders_id
 INNER JOIN customers cu ON ord.customers_id=cu.customers_id
@@ -236,6 +236,7 @@ INNER JOIN orderdetails ordd ON ord.orders_id=ordd.orders_id
 INNER JOIN customers cu ON ord.customers_id=cu.customers_id
 WHERE DAY(created_date)=DAY(CURDATE()) AND MONTH(created_date)=MONTH(CURDATE()) AND ord.shipping_address LIKE "%Ha Nội%" 
 GROUP BY cu.customers_id;
+
 -- Câu 23: Hiển thị tất cả các khách hàng mua hàng (với tổng số tiền) trong khoảng từ ngày, đến ngày(viêt bằng 2 cách, ngày tuỳ chọn )
 SELECT cu.*, SUM((pr.price-(pr.price*pr.discount/100))*ordd.quantity) AS "Tổng Tiền"
 FROM orders ord
@@ -243,17 +244,19 @@ INNER JOIN orderdetails ordd ON ord.orders_id=ordd.orders_id
 INNER JOIN products pr ON pr.products_id=ordd.products_id
 INNER JOIN customers cu ON ord.customers_id=cu.customers_id
 WHERE DAY(created_date)=DAY(CURDATE()) AND MONTH(created_date)=MONTH(CURDATE())
-GROUP BY ord.orders_id;
+GROUP BY cu.customers_id;
+
 -- câu 24: Hiển thị tất cả đơn hàng với tổng số tiền
-SELECT ord.*, (pr.price-(pr.price*pr.discount/100)) AS "Tổng Tiền"
+SELECT ord.*, SUM((pr.price-(pr.price*pr.discount/100))*ordd.quantity) AS "Tổng Tiền"
 FROM orders ord
 INNER JOIN orderdetails ordd ON ord.orders_id=ordd.orders_id
 INNER JOIN products pr ON pr.products_id=ordd.products_id
 GROUP BY ord.orders_id;
+
 -- câu 25: Hiển thị tất cả các nhân viên bán hàng với tổng số tiền bán được
-SELECT em.*, SUM(pr.price) AS "Tổng Tiền"
+SELECT em.*,SUM((pr.price-(pr.price*pr.discount/100))*ordd.quantity) AS "Tổng Tiền"
 FROM orders ord
 INNER JOIN orderdetails ordd ON ord.orders_id=ordd.orders_id
 INNER JOIN products pr ON pr.products_id=ordd.products_id
 INNER JOIN employees em ON ord.employees_id=em.employees_id
-GROUP BY  ord.orders_id;
+GROUP BY  em.employees_id;
